@@ -76,7 +76,28 @@ class EmailProcessor:
         2. Make the API call with appropriate error handling
         3. Validate and return the classification
         """
-        pass
+        # 1. Design and implement the classification prompt 
+        # TODO: make the classes dynamic
+        prompt = f"Classify the following email into one of the categories: complaint, inquiry, feedback, support_request, other\n\n {email['body']}"
+        completion = self.client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are an email classifier."},
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )
+
+        # print(completion.choices[0].message) 
+        predicted_category = completion.choices[0].message.content.lower() 
+        
+        if predicted_category in self.valid_categories:
+            return predicted_category 
+        else:
+            raise ValueError(f"Invalid category predicted: {predicted_category}")
+        
 
     def generate_response(self, email: Dict, classification: str) -> Optional[str]:
         """
@@ -88,6 +109,7 @@ class EmailProcessor:
         3. Add error handling
         """
         pass
+
 
 
 class EmailAutomationSystem:
@@ -203,4 +225,6 @@ def run_demonstration():
 
 # Example usage:
 if __name__ == "__main__":
-    results_df = run_demonstration()
+    # results_df = run_demonstration() 
+    email_processor = EmailProcessor() 
+    email_processor.classify_email(sample_emails[0])
