@@ -78,25 +78,29 @@ class EmailProcessor:
         """
         # 1. Design and implement the classification prompt 
         # TODO: make the classes dynamic
-        prompt = f"Classify the following email into one of the categories: complaint, inquiry, feedback, support_request, other\n\n {email['body']}"
-        completion = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "You are an email classifier."},
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        )
+        prompt = f"Classify the following email into one of the categories: complaint, inquiry, feedback, support_request, other\n\n {email['body']}" 
+        num_retry = 3 
+        for i in range(num_retry):
+            try:
+                completion = self.client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role": "system", "content": "You are an email classifier."},
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ]
+                )
 
-        # print(completion.choices[0].message) 
-        predicted_category = completion.choices[0].message.content.lower() 
-        
-        if predicted_category in self.valid_categories:
-            return predicted_category 
-        else:
-            raise ValueError(f"Invalid category predicted: {predicted_category}")
+                # print(completion.choices[0].message) 
+                predicted_category = completion.choices[0].message.content.lower() 
+                
+                if predicted_category in self.valid_categories:
+                    return predicted_category 
+            except Exception as e: 
+                raise ValueError(f"Failed to classify email: {e}") 
+                
         
 
     def generate_response(self, email: Dict, classification: str) -> Optional[str]:
@@ -138,13 +142,13 @@ class EmailAutomationSystem:
     def __init__(self, processor: EmailProcessor):
         """Initialize the automation system with an EmailProcessor."""
         self.processor = processor
-        self.response_handlers = {
-            "complaint": self._handle_complaint,
-            "inquiry": self._handle_inquiry,
-            "feedback": self._handle_feedback,
-            "support_request": self._handle_support_request,
-            "other": self._handle_other
-        }
+        # self.response_handlers = {
+        #     "complaint": self._handle_complaint,
+        #     "inquiry": self._handle_inquiry,
+        #     "feedback": self._handle_feedback,
+        #     "support_request": self._handle_support_request,
+        #     "other": self._handle_other
+        # }
 
     def process_email(self, email: Dict) -> Dict:
         """
@@ -156,7 +160,7 @@ class EmailAutomationSystem:
         2. Add appropriate error handling
         3. Return processing results
         """
-        predicted_class = self.processor(email) 
+        predicted_class = self.processor.classify_email(email) 
         if predicted_class == "complaint":
             self._handle_complaint(email)
         elif predicted_class == "inquiry":
