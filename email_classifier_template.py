@@ -124,7 +124,7 @@ class EmailProcessor:
 
         # print(completion.choices[0].message) 
         response_email = completion.choices[0].message.content
-        print(response_email )
+        # print(response_email )
         if response_email:
             return response_email 
         else: 
@@ -156,42 +156,53 @@ class EmailAutomationSystem:
         2. Add appropriate error handling
         3. Return processing results
         """
-        pass
+        predicted_class = self.processor(email) 
+        if predicted_class == "complaint":
+            self._handle_complaint(email)
+        elif predicted_class == "inquiry":
+            self._handle_inquiry(email)
+        elif predicted_class == "feedback":
+            self._handle_feedback(email)
+        elif predicted_class == "support_request":
+            self._handle_support_request(email)
+        elif predicted_class == "other":
+            self._handle_other(email)
 
     def _handle_complaint(self, email: Dict):
         """
         Handle complaint emails.
         TODO: Implement complaint handling logic
         """
-        pass
+        
+        send_complaint_response(email, self.processor.generate_response(email, "complaint"))
 
     def _handle_inquiry(self, email: Dict):
         """
         Handle inquiry emails.
         TODO: Implement inquiry handling logic
         """
-        pass
+        send_complaint_response(email, self.processor.generate_response(email, "inquiry"))
 
     def _handle_feedback(self, email: Dict):
         """
         Handle feedback emails.
         TODO: Implement feedback handling logic
         """
-        pass
+        send_complaint_response(email, self.processor.generate_response(email, "feedback"))
 
     def _handle_support_request(self, email: Dict):
         """
         Handle support request emails.
         TODO: Implement support request handling logic
         """
-        pass
+        send_complaint_response(email, self.processor.generate_response(email, "support_request"))
 
     def _handle_other(self, email: Dict):
         """
         Handle other category emails.
         TODO: Implement handling logic for other categories
         """
-        pass
+        send_complaint_response(email, self.processor.generate_response(email, "other"))
 
 # Mock service functions
 def send_complaint_response(email_id: str, response: str):
@@ -247,8 +258,8 @@ def run_demonstration():
 
 # Example usage:
 if __name__ == "__main__":
-    # results_df = run_demonstration() 
-    email_processor = EmailProcessor() 
-    classification = email_processor.classify_email(sample_emails[0])
-    # print(f"{classification=}")
-    email_processor.generate_response(sample_emails[0], classification)
+    results_df = run_demonstration() 
+    # email_processor = EmailProcessor() 
+    # classification = email_processor.classify_email(sample_emails[0])
+    # # print(f"{classification=}")
+    # email_processor.generate_response(sample_emails[0], classification)
