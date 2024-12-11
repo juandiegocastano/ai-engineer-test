@@ -77,8 +77,8 @@ class EmailProcessor:
         3. Validate and return the classification
         """
         # 1. Design and implement the classification prompt 
-        # TODO: make the classes dynamic
-        prompt = f"Classify the following email into one of the categories: complaint, inquiry, feedback, support_request, other\n\n {email['body']}" 
+        # TODO: make the classes dynamic 
+        prompt = f"Classify the following email into one of the categories (and always choose one): complaint, inquiry, feedback, support_request, other\n\n body={email['body']}" 
         num_retry = 3 
         for i in range(num_retry):
             try:
@@ -162,15 +162,15 @@ class EmailAutomationSystem:
         """
         predicted_class = self.processor.classify_email(email) 
         if predicted_class == "complaint":
-            self._handle_complaint(email)
+            return self._handle_complaint(email)
         elif predicted_class == "inquiry":
-            self._handle_inquiry(email)
+            return self._handle_inquiry(email)
         elif predicted_class == "feedback":
-            self._handle_feedback(email)
+            return self._handle_feedback(email)
         elif predicted_class == "support_request":
-            self._handle_support_request(email)
+            return self._handle_support_request(email)
         elif predicted_class == "other":
-            self._handle_other(email)
+            return self._handle_other(email)
 
     def _handle_complaint(self, email: Dict):
         """
@@ -178,35 +178,65 @@ class EmailAutomationSystem:
         TODO: Implement complaint handling logic
         """
         
-        send_complaint_response(email, self.processor.generate_response(email, "complaint"))
+        # return send_complaint_response(email, self.processor.generate_response(email, "complaint"))
+        response = {
+            "response": self.processor.generate_response(email, "complaint"),
+            "email_id": email["id"],
+            "category": "complaint",
+        }
+        return response
 
     def _handle_inquiry(self, email: Dict):
         """
         Handle inquiry emails.
         TODO: Implement inquiry handling logic
         """
-        send_complaint_response(email, self.processor.generate_response(email, "inquiry"))
+        # return send_complaint_response(email, self.processor.generate_response(email, "inquiry"))
+        response = {
+            "response": self.processor.generate_response(email, "inquiry"),
+            "email_id": email["id"],
+            "category": "complaint",
+        }
+        return response
 
     def _handle_feedback(self, email: Dict):
         """
         Handle feedback emails.
         TODO: Implement feedback handling logic
         """
-        send_complaint_response(email, self.processor.generate_response(email, "feedback"))
+        # return send_complaint_response(email, self.processor.generate_response(email, "feedback"))
+        response = {
+            "response": self.processor.generate_response(email, "feedback"),
+            "email_id": email["id"],
+            "category": "feedback",
+        }
+        return response
 
     def _handle_support_request(self, email: Dict):
         """
         Handle support request emails.
         TODO: Implement support request handling logic
         """
-        send_complaint_response(email, self.processor.generate_response(email, "support_request"))
+        # return send_complaint_response(email, self.processor.generate_response(email, "support_request"))
+        response = {
+            "response": self.processor.generate_response(email, "support_request"),
+            "email_id": email["id"],
+            "category": "support_request",
+        }
+        return response
 
     def _handle_other(self, email: Dict):
         """
         Handle other category emails.
         TODO: Implement handling logic for other categories
         """
-        send_complaint_response(email, self.processor.generate_response(email, "other"))
+        # return send_complaint_response(email, self.processor.generate_response(email, "other"))
+        response = {
+            "response": self.processor.generate_response(email, "other"),
+            "email_id": email["id"],
+            "category": "other",
+        }
+        return response
 
 # Mock service functions
 def send_complaint_response(email_id: str, response: str):
@@ -246,16 +276,15 @@ def run_demonstration():
     automation_system = EmailAutomationSystem(processor)
 
     # Process all sample emails
-    results = []
+    results = [] 
     for email in sample_emails:
         logger.info(f"\nProcessing email {email['id']}...")
         result = automation_system.process_email(email)
         results.append(result)
 
-    # Create a summary DataFrame
-    df = pd.DataFrame(results)
-    print("\nProcessing Summary:")
-    print(df[["email_id", "success", "classification", "response_sent"]])
+    # Create a summary DataFrame 
+    print(results)
+    df = pd.DataFrame(data=results)
 
     return df
 
@@ -263,7 +292,4 @@ def run_demonstration():
 # Example usage:
 if __name__ == "__main__":
     results_df = run_demonstration() 
-    # email_processor = EmailProcessor() 
-    # classification = email_processor.classify_email(sample_emails[0])
-    # # print(f"{classification=}")
-    # email_processor.generate_response(sample_emails[0], classification)
+    print(results_df)
