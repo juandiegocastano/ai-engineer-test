@@ -11,6 +11,7 @@ import re
 import time
 import logging
 from enum import Enum
+from dataclasses import dataclass
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -78,81 +79,126 @@ class EmailCategory(Enum):
         """Get all valid category values"""
         return {category.value for category in cls}
 
-class EmailProcessor:
+@dataclass
+class Example:
+    text: str
+    category: EmailCategory
+
+@dataclass
+class PromptTemplate:
+    system_message: str
+    examples: List[Example]
+    output_format: str
+    temperature: float = 0.3
+
+class EmailPromptBuilder:
     def __init__(self):
-        """Initialize the email processor with OpenAI API key."""
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-        # Define valid categories
-        self.valid_categories = EmailCategory.list_values()
-
-    def classify_email(self, email: Dict) -> Optional[str]:
-        prompt = f"""
-        Classify the following email into exactly one of these categories: complaint, inquiry, feedback, support_request, other.
-
-        Examples:
-        1. Email: "Your product is broken and I want a refund"
-        Classification:  {EmailCategory.COMPLAINT.value}
-
-        2. Email: "What are your business hours?"
-        Classification: {EmailCategory.INQUIRY.value}
-
-        3. Email: "Great service, thank you!"
-        Classification: {EmailCategory.FEEDBACK.value}
-
-        4. Email: "I need help installing the software"
-        Classification: support_request
-
-        Now classify this email:
-        Subject: {email['subject']}
-        Body: email['body']
-
+        self.examples = [
+            Example(
+                "Your product is broken and I want a refund",
+                EmailCategory.COMPLAINT
+            ),
+            Example(
+                "What are your business hours?",
+                EmailCategory.INQUIRY
+            ),
+            Example(
+                "Great service, thank you!",
+                EmailCategory.FEEDBACK
+            ),
+            Example(
+                "I need help installing the software",
+                EmailCategory.SUPPORT_REQUEST
+            )
+        ]
+        
+        self.output_format = """
         Provide your answer in this format:
         Classification: [category]
         Confidence: [high/medium/low]
-        Reasoning: [brief explanation]
+        """
+        
+    def build_prompt(self, email: Dict) -> str:
+        examples_text = self._format_examples()
+        return f"""
+        Classify the following email into exactly one of these categories: {', '.join(EmailCategory.list_values())}.
+
+        {examples_text}
+
+        Now classify this email:
+        Subject: {email['subject']}
+        Body: {email['body']}
+
+        {self.output_format}
         """
 
+    def _format_examples(self) -> str:
+        return "\n".join([
+            f"{i+1}. Email: \"{example.text}\"\n"
+            f"Classification: {example.category.value}"
+            for i, example in enumerate(self.examples)
+        ])
+
+
+class EmailProcessor:
+    def __init__(self):
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.prompt_builder = EmailPromptBuilder()
+        self.template = PromptTemplate(
+            system_message="You are an expert email classifier. Always classify emails into exactly one category.",
+            examples=self.prompt_builder.examples,
+            output_format=self.prompt_builder.output_format
+        )
+        self.valid_categories = EmailCategory.list_values()
+
+    def classify_email(self, email: Dict) -> Optional[EmailCategory]:
+        prompt = self.prompt_builder.build_prompt(email)
+        
         num_retry = 3
         for attempt in range(num_retry):
             try:
                 completion = self.client.chat.completions.create(
-                    model="gpt-4",  # Fixed typo in model name
+                    model="gpt-4",
                     messages=[
-                        {
-                            "role": "system", 
-                            "content": "You are an expert email classifier. Always classify emails into exactly one category."
-                        },
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
+                        {"role": "system", "content": self.template.system_message},
+                        {"role": "user", "content": prompt}
                     ],
-                    temperature=0.3  # Lower temperature for more consistent results
+                    temperature=0.3
                 )
 
-                response = completion.choices[0].message.content.lower()
+                response = completion.choices[0].message.content.strip().lower()
+                logger.debug(f"Raw response: {response}")
                 
-                # Parse structured response
+                # Updated regex patterns to handle multiline responses
+                classification_pattern = r"classification:\s*([a-z_]+)"
+                confidence_pattern = r"confidence:\s*([a-z]+)"
+                
                 try:
-                    classification = re.search(r"classification:\s*(\w+)", response).group(1)
-                    confidence = re.search(r"confidence:\s*(\w+)", response).group(1)
+                    classification_match = re.search(classification_pattern, response, re.MULTILINE)
+                    confidence_match = re.search(confidence_pattern, response, re.MULTILINE)
                     
-                    if classification in self.valid_categories:
-                        logger.info(f"Classification: {classification} (Confidence: {confidence})")
-                        return EmailCategory.from_string(classification)
-                    else:
-                        logger.warning(f"Invalid classification received: {classification}")
+                    if classification_match and confidence_match:
+                        classification = classification_match.group(1).strip()
+                        confidence = confidence_match.group(1).strip()
                         
-                except AttributeError:
-                    logger.error("Could not parse LLM response format")
+                        # Now valid_categories will be available
+                        if classification in self.valid_categories:
+                            logger.info(f"Classification: {classification} (Confidence: {confidence})")
+                            return EmailCategory.from_string(classification)
+                        else:
+                            logger.warning(f"Invalid classification received: {classification}")
+                    else:
+                        logger.error(f"Failed to parse response: {response}")
+                        
+                except AttributeError as ae:
+                    logger.error(f"Parse error: {ae}, Response: {response}")
                     continue
                     
             except Exception as e:
                 logger.error(f"Attempt {attempt + 1} failed: {str(e)}")
                 if attempt == num_retry - 1:
                     raise ValueError(f"Failed to classify email after {num_retry} attempts: {e}")
-                time.sleep(1)  # Back off before retry
+                time.sleep(1)
                 
         return None
                 
@@ -330,7 +376,6 @@ def run_demonstration():
         results.append(result)
 
     # Create a summary DataFrame 
-    print(results)
     df = pd.DataFrame(data=results)
 
     return df
