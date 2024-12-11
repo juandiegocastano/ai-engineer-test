@@ -108,7 +108,29 @@ class EmailProcessor:
         2. Implement appropriate response templates
         3. Add error handling
         """
-        pass
+        # 1. Design and implement the classification prompt 
+        # TODO: make the classes dynamic
+        prompt = f"Write a professional response to the following email based on the classification: {classification}\n\n {email['body']}"
+        completion = self.client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are an agent responding to an email"},
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )
+
+        # print(completion.choices[0].message) 
+        response_email = completion.choices[0].message.content
+        print(response_email )
+        if response_email:
+            return response_email 
+        else: 
+            raise ValueError("Failed to generate response")
+        
+         
 
 
 
@@ -227,4 +249,6 @@ def run_demonstration():
 if __name__ == "__main__":
     # results_df = run_demonstration() 
     email_processor = EmailProcessor() 
-    email_processor.classify_email(sample_emails[0])
+    classification = email_processor.classify_email(sample_emails[0])
+    # print(f"{classification=}")
+    email_processor.generate_response(sample_emails[0], classification)
