@@ -1,0 +1,6 @@
+id,from,subject,body,timestamp
+001,angry.customer@example.com,Broken product received,I received my order #12345 yesterday but it arrived completely damaged. This is unacceptable and I demand a refund immediately. This is the worst customer service I've experienced.,2024-03-15T10:30:00Z
+002,curious.shopper@example.com,Question about product specifications,"Hi, I'm interested in buying your premium package but I couldn't find information about whether it's compatible with Mac OS. Could you please clarify this? Thanks!",2024-03-15T11:45:00Z
+003,happy.user@example.com,Amazing customer support,I just wanted to say thank you for the excellent support I received from Sarah on your team. She went above and beyond to help resolve my issue. Keep up the great work!,2024-03-15T13:15:00Z
+004,tech.user@example.com,Need help with installation,I've been trying to install the software for the past hour but keep getting error code 5123. I've already tried restarting my computer and clearing the cache. Please help!,2024-03-15T14:20:00Z
+005,business.client@example.com,Partnership opportunity,Our company is interested in exploring potential partnership opportunities with your organization. Would it be possible to schedule a call next week to discuss this further?,2024-03-15T15:00:00Z
