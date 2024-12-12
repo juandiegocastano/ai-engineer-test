@@ -13,6 +13,7 @@ class EmailPromptBuilder:
         return f"""
         Classify the following email into exactly one of these categories: {', '.join(EmailCategory.list_values())}.
 
+        For reference, here are some examples of email categories:
         {examples_text}
 
         Now classify this email:

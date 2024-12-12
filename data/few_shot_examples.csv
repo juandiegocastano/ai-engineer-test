@@ -3,3 +3,25 @@ text,category
 "What are your business hours?",inquiry
 "Great service, thank you!",feedback
 "I need help installing the software",support_request
+"I want to offer my services as an accountant ",other
+"I want to help you with your legal problem ",other
+"I received the wrong item in my order",complaint
+"Can you provide more details about the warranty?",inquiry
+"I'm very satisfied with your customer service",feedback
+"I'm experiencing an error when I try to log in",support_request
+"Do you have any job openings?",other
+"Your website is not working properly",support_request
+"Where can I find your privacy policy?",inquiry
+"Thank you for the quick delivery",feedback
+"I'm unhappy with the quality of the product",complaint
+"I would like to schedule a demo of your software",inquiry
+"Do you offer discounts for bulk purchases?",inquiry
+"Can someone assist me with resetting my password?",support_request
+"I think your service could be improved by adding more features",feedback
+"Are you interested in a partnership?",other
+"Please unsubscribe me from your mailing list",other
+"The application keeps crashing on startup",support_request
+"Your team was very helpful during installation",feedback
+"What payment methods do you accept?",inquiry
+"I need to update my billing information",support_request
+"I'm interested in becoming a reseller",other
